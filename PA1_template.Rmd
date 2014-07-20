@@ -2,19 +2,136 @@
 
 
 ## Loading and preprocessing the data
-
+1. Read in the activity data.
+2. Convert the "date" column into the Date class.
+```{r pre-process, echo=TRUE, results='hide'}
+mydata <- read.csv("~/R/Coursera/Reproducible-Research/data/repdata-data-activity/activity.csv", stringsAsFactors = F)
+mydata$date <- as.Date(mydata$date, "%Y-%m-%d")
+```
 
 
 ## What is mean total number of steps taken per day?
+Tally up the steps taken each day.
+```{r}
+step_sum <- aggregate(steps ~ date, data = mydata, sum)
+```
+
+Create a histogram of the total steps per day.
+```{r histogram, fig.width=7, fig.height=6}
+hist(step_sum$steps, breaks=10)
+```
+
+The mean number of total steps per day is:
+```{r}
+step_sum_mean <- mean(step_sum$steps)
+print(step_sum_mean)
+```
+
+The median number of total steps per day is:
+```{r}
+step_sum_median <- median(step_sum$steps)
+print(step_sum_median)
+```
+
 
 
 
 ## What is the average daily activity pattern?
+Average the number of steps for each 5 minute interval across all days.
+```{r}
+interval_steps <- aggregate(steps ~ interval, data = mydata, mean)
+```
 
+Plot the data.
+```{r lineplot, fig.width=7, fig.height=6}
+plot(interval_steps$interval, interval_steps$steps, type = "l")
+```
+
+The interval with the highest number of steps on average is:
+```{r}
+interval_steps[interval_steps$steps==max(interval_steps$steps),]
+```
 
 
 ## Imputing missing values
+The total number of missing values (missing steps per day/interval) is:
+```{r}
+sum(is.na(mydata$steps))
+```
+
+Impute all missing values by replacing "NA" with the mean number of steps for that specific 5 minute interval (mean across all days).
+```{r}
+# renaming a column due to merging two datasets, each with a column named "steps".   
+colnames(interval_steps)[2] <- "mean.int.steps"
+impdata <- merge(mydata, interval_steps, by="interval")
+impdata <- impdata[order(impdata$date,impdata$interval),]
+head(impdata)
+
+impdata$steps[is.na(impdata$steps)] <- impdata$mean.int.steps
+head(impdata)
+```
+
+Tally up the steps taken each day (with imputed values).
+```{r}
+impstep_sum <- aggregate(steps ~ date, data = impdata, sum)
+```
+
+Create a histogram of the total steps per day (with imputed values).
+```{r histogram imputed, fig.width=7, fig.height=6}
+hist(impstep_sum$steps, breaks=10)
+```
+
+The mean number of total steps per day (with imputed values):
+```{r}
+impstep_sum_mean <- mean(impstep_sum$steps)
+print(impstep_sum_mean)
+```
+
+The median number of total steps per day is (with imputed values):
+```{r}
+impstep_sum_median <- median(impstep_sum$steps)
+print(impstep_sum_median)
+```
 
 
+Imputing missing values changed the mean number of steps per day by:
+```{r}
+difmean <- impstep_sum_mean - step_sum_mean
+print(difmean)
+```
+
+Imputing missing values changed the median number of steps per day by:
+```{r}
+difmedian <- impstep_sum_median - step_sum_median
+print(difmedian)
+```
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+Add a weekday column to the data with imputed missing values.
+```{r}
+impdata$wkday <- weekdays(impdata$date)
+
+# build a separate data.frame containing days of the week
+wkday <- c("Sunday", "Monday","Tuesday","Wednesday","Thursday","Friday","Saturday")
+daytype <- c("weekend","weekday","weekday","weekday","weekday","weekday","weekend")
+wk <- data.frame(wkday, daytype)
+print(wk)
+
+# now merge the wkday data.frame with the original data with imputed missing values.
+impdata_wk <- merge(impdata, wk, by = "wkday", sort = F)
+impdata_wk <- impdata_wk[order(impdata_wk$date, impdata_wk$interval),]
+
+```
+
+
+Now average for each interval by weekend
+```{r}
+imp_interval_steps <- aggregate(steps ~ interval + daytype, data = impdata_wk, mean)
+```
+
+Plot the data.
+```{r panel lineplot, fig.width=7, fig.height=6}
+library(lattice)
+xyplot(steps ~ interval | daytype, data = imp_interval_steps, type="l", layout=c(1,2))
+```
