@@ -24,7 +24,7 @@ step_sum <- aggregate(steps ~ date, data = mydata, sum)
 Create a histogram of the total steps per day.
 
 ```r
-hist(step_sum$steps, breaks = 10)
+hist(step_sum$steps, breaks = 10, main = "Histogram of total steps", xlab = "total steps")
 ```
 
 ![plot of chunk histogram](figure/histogram.png) 
@@ -68,7 +68,8 @@ interval_steps <- aggregate(steps ~ interval, data = mydata, mean)
 Plot the data.
 
 ```r
-plot(interval_steps$interval, interval_steps$steps, type = "l")
+plot(interval_steps$interval, interval_steps$steps, type = "l", main = "mean steps per 5-minute interval", 
+    xlab = "interval", ylab = "steps")
 ```
 
 ![plot of chunk lineplot](figure/lineplot.png) 
@@ -155,7 +156,8 @@ impstep_sum <- aggregate(steps ~ date, data = impdata, sum)
 Create a histogram of the total steps per day (with imputed values).
 
 ```r
-hist(impstep_sum$steps, breaks = 10)
+hist(impstep_sum$steps, breaks = 10, main = "Histogram of total steps (with imputed values)", 
+    xlab = "total steps")
 ```
 
 ![plot of chunk histogram imputed](figure/histogram_imputed.png) 
